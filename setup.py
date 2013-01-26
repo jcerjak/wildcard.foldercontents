@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '1.0dev'
+version = '1.1dev'
 
 setup(name='wildcard.foldercontents',
       version=version,
@@ -25,8 +25,7 @@ setup(name='wildcard.foldercontents',
       zip_safe=False,
       install_requires=[
           'setuptools',
-          'collective.js.jqueryui',
-          'jarn.jsi18n',
+          'jarn.jsi18n'
       ],
       entry_points="""
       # -*- Entry points: -*-
