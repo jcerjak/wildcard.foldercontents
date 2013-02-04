@@ -44,6 +44,15 @@
       #content ul.dropdown-menu li a{
         border-bottom: none;
       }
+
+      .QueryWidget .sortingField,
+      .QueryWidget .previewresultsLabel,
+      .QueryWidget .previewresults{
+        display: none;
+      }
+      .filter-controls{
+        clear: both;
+      }
       </style>
 
     </metal:css>
@@ -139,7 +148,25 @@
               Up one level
           </a>
 
+        <div class="fc filter">
+          <form method="POST" name="filter"
+                tal:attributes="action string:${context/absolute_url}/folder_contents">
+            <label class="horizontal" for="form-widgets-query">
+              Filter contents
+              <span class="formHelp">
+                Define the search terms for the items you want to list by choosing what to match on.
+            </span>
+            </label>
+            <div tal:replace="structure view/widget/render"></div>
+            <input tal:replace="structure context/@@authenticator/authenticator" />
+            <div class="filter-controls">
+              <button type="submit" class="btn" i18n:translate="foldercontents_filter_contents">Filter contents</button>
+            </div>
+          </form>
+        </div>
+
         <div class="fc">
+
           <form name="folderContentsForm"
                 method="post"
                 action="folder_object"

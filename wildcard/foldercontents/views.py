@@ -8,12 +8,14 @@ from AccessControl import Unauthorized
 
 from zope.interface import Interface
 from zope.component import getMultiAdapter
-from zope.filerepresentation.interfaces import IFileFactory
+# from zope.filerepresentation.interfaces import IFileFactory
 
 from plone.app.content.browser.foldercontents import (FolderContentsView,
                                                       FolderContentsTable)
 from plone.app.content.browser.tableview import Table
+from plone.app.querystring import queryparser
 from plone.folder.interfaces import IExplicitOrdering
+from plone.formwidget.querystring.widget import QueryStringWidget
 
 from Products.CMFCore.utils import getToolByName
 from Products.Five import BrowserView
@@ -101,6 +103,10 @@ class NewFolderContentsTable(FolderContentsTable):
         order = _normalize_form_val(self.request.form, 'sort_order')
         if order:
             self.contentFilter['sort_order'] = 'reverse'
+
+        path = '/'.join(self.context.getPhysicalPath())
+        self.contentFilter['path'] = {"query": path, "depth": 1}
+
         self.items = self.folderitems()
 
         url = context.absolute_url()
@@ -111,6 +117,11 @@ class NewFolderContentsTable(FolderContentsTable):
                            buttons=self.buttons)
         self.table.is_collection = _is_collection(self.context)
 
+    def contentsMethod(self):
+        # use portal catalog instead of getFolderContents (default) so it
+        # works also for queries parsed from query string widget
+        return self.context.portal_catalog
+
     @property
     def show_sort_column(self):
         sort = _normalize_form_val(self.request.form, 'sort_on')
@@ -119,6 +130,12 @@ class NewFolderContentsTable(FolderContentsTable):
 
 
 class NewFolderContentsView(FolderContentsView):
+
+    def __init__(self, context, request):
+        super(NewFolderContentsView, self).__init__(context, request)
+        self.widget = QueryStringWidget(request)
+        self.widget.name = 'filter'
+        self.widget.label = u'Filter folder contents'
 
     @property
     def orderable(self):
@@ -137,7 +154,12 @@ class NewFolderContentsView(FolderContentsView):
         return super(NewFolderContentsView, self).__call__(self)
 
     def contents_table(self):
-        table = NewFolderContentsTable(aq_inner(self.context), self.request)
+        query = self.request.form.get('filter', None)
+        contentFilter = None
+        if query:
+            contentFilter = queryparser.parseFormquery(self.context, query)
+        table = NewFolderContentsTable(
+            aq_inner(self.context), self.request, contentFilter)
         return table.render()
 
     def jstemplates(self):
